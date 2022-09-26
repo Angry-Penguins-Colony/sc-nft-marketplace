@@ -33,3 +33,4 @@ tags
 
 # Python scripts
 **/__pycache__/**
+*.pem

@@ -1,0 +1,18 @@
+{
+    "contract": {
+        "deploy": {
+            "proxy": "https://devnet-gateway.elrond.com",
+            "chain": "D",
+            "verbose": true,
+            "recall-nonce": true,
+            "bytecode": "output/esdt-nft-marketplace.wasm",
+            "pem": "erd1tcj6pdcknflmaehxeq6dh8grf3l9l6xlyd5ycgj27ahmc368v4xqw5lcw5.pem",
+            "gas-limit": 600000000,
+            "arguments": [
+                "0x03E8"
+            ],
+            "send": true,
+            "outfile": "deploy-mainnet.interaction.json"
+        }
+    }
+}

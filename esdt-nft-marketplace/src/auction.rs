@@ -4,7 +4,7 @@ elrond_wasm::derive_imports!();
 pub const PERCENTAGE_TOTAL: u64 = 10_000; // 100%
 pub const NFT_AMOUNT: u32 = 1; // Token has to be unique to be considered NFT
 
-#[derive(TopEncode, TopDecode, TypeAbi)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem)]
 pub struct Auction<M: ManagedTypeApi> {
     pub auctioned_tokens: EsdtTokenPayment<M>,
     pub auction_type: AuctionType,
@@ -24,7 +24,7 @@ pub struct Auction<M: ManagedTypeApi> {
     pub creator_royalties_percentage: BigUint<M>,
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, PartialEq)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, PartialEq, ManagedVecItem)]
 pub enum AuctionType {
     None,
     Nft,
@@ -215,6 +215,21 @@ pub trait AuctionModule:
         let auction_mapper = self.auction_by_id(auction_id);
         require!(!auction_mapper.is_empty(), "Auction does not exist");
         auction_mapper.get()
+    }
+
+    #[view(getAuctionsOfCollection)]
+    fn get_auctions_of_collection(&self, collection: TokenIdentifier<Self::Api>) -> ManagedVec<Self::Api, Auction<Self::Api>> {
+
+        let mut auctions_list = ManagedVec::new();
+
+        for n in 1..=self.last_valid_auction_id().get() {
+            let auction = self.auction_by_id(n);
+            if !auction.is_empty() && auction.get().auctioned_tokens.token_identifier == collection {
+                auctions_list.push(auction.get());
+            }
+        }
+
+        return auctions_list;
     }
 
     #[storage_mapper("auctionById")]

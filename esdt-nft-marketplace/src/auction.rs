@@ -218,14 +218,17 @@ pub trait AuctionModule:
     }
 
     #[view(getAuctionsOfCollection)]
-    fn get_auctions_of_collection(&self, collection: TokenIdentifier<Self::Api>) -> ManagedVec<Self::Api, Auction<Self::Api>> {
+    fn get_auctions_of_collection(&self, collection: TokenIdentifier<Self::Api>) -> 
+    MultiValueEncoded<Self::Api, 
+        MultiValue2<u64, Auction<Self::Api>>        
+    > {
 
-        let mut auctions_list = ManagedVec::new();
+        let mut auctions_list = MultiValueEncoded::<Self::Api, MultiValue2<u64, Auction<Self::Api>>>::new();
 
         for n in 1..=self.last_valid_auction_id().get() {
             let auction = self.auction_by_id(n);
             if !auction.is_empty() && auction.get().auctioned_tokens.token_identifier == collection {
-                auctions_list.push(auction.get());
+                auctions_list.push(MultiValue2::from((n, auction.get())));
             }
         }
 

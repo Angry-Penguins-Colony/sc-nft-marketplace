@@ -24,6 +24,16 @@ pub struct Auction<M: ManagedTypeApi> {
     pub creator_royalties_percentage: BigUint<M>,
 }
 
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem)]
+pub struct BoughtAuction<M: ManagedTypeApi> {
+    pub transaction_hash: ManagedByteArray<M, 32>,
+    pub price: BigUint<M>,
+    pub seller: ManagedAddress<M>,
+    pub buyer: ManagedAddress<M>,
+    pub buy_timestamp: u64,
+    pub auctioned_tokens: EsdtTokenPayment<M>,
+}
+
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, PartialEq, ManagedVecItem)]
 pub enum AuctionType {
     None,
@@ -226,17 +236,22 @@ pub trait AuctionModule:
     }
 
     #[view(getBoughtAuctionsOfToken)]
-    fn get_bought_auctions_of_token(&self, collection: TokenIdentifier<Self::Api>, nonce: u64) -> MultiValueEncoded<Self::Api, MultiValue2<u64, Auction<Self::Api>> >
-    {
-        return self.get_filtered_auctions_list(
-            &Self::auction_by_id,
-            self.last_valid_auction_id().get(),
-            &|auction| {
-                !auction.is_empty()
-                    && auction.get().auctioned_tokens.token_identifier == collection
-                    && auction.get().auctioned_tokens.token_nonce == nonce
-            },
-        );
+    fn get_bought_auctions_of_token(&self, collection: TokenIdentifier<Self::Api>, nonce: u64) -> ManagedVec<Self::Api, BoughtAuction<Self::Api>> {
+        let mut bought_auctions = ManagedVec::new();
+
+        for id in 1..=self.last_valid_auction_id().get() {
+            let auction = self.bought_auction_by_id(id);
+
+            if !auction.is_empty() {
+                let auction = auction.get();
+
+                if auction.auctioned_tokens.token_identifier == collection && auction.auctioned_tokens.token_nonce == nonce {
+                    bought_auctions.push(auction);
+                }
+            }
+        }
+
+        bought_auctions
     }
 
     fn get_filtered_auctions_list(&self, 
@@ -262,7 +277,7 @@ pub trait AuctionModule:
     fn auction_by_id(&self, auction_id: u64) -> SingleValueMapper<Auction<Self::Api>>;
     
     #[storage_mapper("lastBoughtAuctionById")]
-    fn bought_auction_by_id(&self, auction_id: u64) -> SingleValueMapper<Auction<Self::Api>>;
+    fn bought_auction_by_id(&self, auction_id: u64) -> SingleValueMapper<BoughtAuction<Self::Api>>;
 
     #[view(getLastValidAuctionId)]
     #[storage_mapper("lastValidAuctionId")]

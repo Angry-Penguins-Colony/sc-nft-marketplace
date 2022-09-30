@@ -1,6 +1,6 @@
 elrond_wasm::imports!();
 
-use crate::auction::{Auction, AuctionType, NFT_AMOUNT};
+use crate::auction::{Auction, AuctionType, NFT_AMOUNT, BoughtAuction};
 
 #[elrond_wasm::module]
 pub trait BiddingModule:
@@ -61,7 +61,15 @@ pub trait BiddingModule:
         auction.auctioned_tokens.amount -= &sft_buy_amount;
         if auction.auctioned_tokens.amount == 0 {
             self.auction_by_id(auction_id).clear();
-            self.bought_auction_by_id(auction_id).set(&auction);
+
+            self.bought_auction_by_id(auction_id).set(BoughtAuction {
+                price: auction.current_bid.clone(),
+                seller: auction.original_owner.clone(),
+                auctioned_tokens: auction.auctioned_tokens.clone(),
+                buy_timestamp: self.blockchain().get_block_timestamp(),
+                buyer: auction.current_winner.clone(),
+                transaction_hash: self.blockchain().get_tx_hash(),
+            });
         } else {
             self.auction_by_id(auction_id).set(&auction);
         }

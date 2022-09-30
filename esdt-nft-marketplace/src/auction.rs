@@ -218,16 +218,42 @@ pub trait AuctionModule:
     }
 
     #[view(getAuctionsOfCollection)]
-    fn get_auctions_of_collection(&self, collection: TokenIdentifier<Self::Api>) -> 
-    MultiValueEncoded<Self::Api, 
-        MultiValue2<u64, Auction<Self::Api>>        
-    > {
+    fn get_auctions_of_collection(&self, collection: TokenIdentifier<Self::Api>) -> MultiValueEncoded<Self::Api, MultiValue2<u64, Auction<Self::Api>>> {
+        return self.get_filtered_auctions_list(
+            &Self::auction_by_id,
+            self.last_valid_auction_id().get(),
+            &|auction| {
+                !auction.is_empty() 
+                    && auction.get().auctioned_tokens.token_identifier == collection
+            },
+        );
+    }
 
+    #[view(getBoughtAuctionsOfToken)]
+    fn get_bought_auctions_of_token(&self, collection: TokenIdentifier<Self::Api>, nonce: u64) -> MultiValueEncoded<Self::Api, MultiValue2<u64, Auction<Self::Api>> >
+    {
+        return self.get_filtered_auctions_list(
+            &Self::auction_by_id,
+            self.last_valid_auction_id().get(),
+            &|auction| {
+                !auction.is_empty()
+                    && auction.get().auctioned_tokens.token_identifier == collection
+                    && auction.get().auctioned_tokens.token_nonce == nonce
+            },
+        );
+    }
+
+    fn get_filtered_auctions_list(&self, 
+        get_auction_from_storage: &dyn Fn(&Self, u64) -> SingleValueMapper<Auction<Self::Api>>,
+        end_id: u64,
+        filter: &dyn Fn(&SingleValueMapper<Auction<Self::Api>>) -> bool,
+    ) -> MultiValueEncoded<Self::Api,  MultiValue2<u64, Auction<Self::Api>>>  {
         let mut auctions_list = MultiValueEncoded::<Self::Api, MultiValue2<u64, Auction<Self::Api>>>::new();
 
-        for n in 1..=self.last_valid_auction_id().get() {
-            let auction = self.auction_by_id(n);
-            if !auction.is_empty() && auction.get().auctioned_tokens.token_identifier == collection {
+        for n in 1..=end_id {
+            let auction = get_auction_from_storage(&self, n);
+
+            if filter(&auction) {
                 auctions_list.push(MultiValue2::from((n, auction.get())));
             }
         }
@@ -235,8 +261,12 @@ pub trait AuctionModule:
         return auctions_list;
     }
 
+
     #[storage_mapper("auctionById")]
     fn auction_by_id(&self, auction_id: u64) -> SingleValueMapper<Auction<Self::Api>>;
+    
+    #[storage_mapper("lastBoughtAuctionById")]
+    fn bought_auction_by_id(&self, auction_id: u64) -> SingleValueMapper<Auction<Self::Api>>;
 
     #[view(getLastValidAuctionId)]
     #[storage_mapper("lastValidAuctionId")]

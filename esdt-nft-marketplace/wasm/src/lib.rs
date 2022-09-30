@@ -12,6 +12,7 @@ elrond_wasm_node::wasm_endpoints! {
         claimTokens
         endAuction
         getAuctionsOfCollection
+        getBoughtAuctionsOfToken
         getClaimableAmount
         getFullAuctionData
         getLastValidAuctionId

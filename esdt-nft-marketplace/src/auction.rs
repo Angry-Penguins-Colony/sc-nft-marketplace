@@ -117,14 +117,10 @@ pub trait AuctionModule:
         let auction_id = self.last_valid_auction_id().get() + 1;
         self.last_valid_auction_id().set(&auction_id);
 
-        let auction_type = if nft_amount > NFT_AMOUNT {
-            match sft_max_one_per_payment {
+        let auction_type =  match sft_max_one_per_payment {
                 true => AuctionType::SftOnePerPayment,
                 false => AuctionType::SftAll,
-            }
-        } else {
-            AuctionType::Nft
-        };
+            };
 
         let auction = Auction {
             auctioned_tokens: EsdtTokenPayment::new(nft_type, nft_nonce, nft_amount),

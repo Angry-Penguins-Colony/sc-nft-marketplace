@@ -8,7 +8,6 @@ elrond_wasm_node::wasm_endpoints! {
     esdt_nft_marketplace
     (
         auctionToken
-        bid
         buySft
         claimTokens
         endAuction

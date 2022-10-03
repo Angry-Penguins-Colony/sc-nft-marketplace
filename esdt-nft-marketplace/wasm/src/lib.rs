@@ -16,6 +16,7 @@ elrond_wasm_node::wasm_endpoints! {
         getClaimableAmount
         getFullAuctionData
         getLastValidAuctionId
+        getMarketData
         getMarketplaceCutPercentage
         isPaused
         pause

@@ -10,6 +10,7 @@ pub mod bidding;
 pub mod common_util_functions;
 pub mod events;
 pub mod token_distribution;
+pub mod market_data;
 
 #[elrond_wasm::contract]
 pub trait EsdtNftMarketplace:
@@ -19,6 +20,7 @@ pub trait EsdtNftMarketplace:
     + events::EventsModule
     + common_util_functions::CommonUtilFunctions
     + elrond_wasm_modules::pause::PauseModule
+    + market_data::MarketDataModule
 {
     #[init]
     fn init(&self, bid_cut_percentage: u64) {

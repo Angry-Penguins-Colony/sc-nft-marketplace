@@ -27,21 +27,21 @@ pub trait MarketDataModule:
         let mut total_price = BigUint::zero();
 
 
-        for id in 1..=self.last_valid_auction_id().get() {
-            let opt_listed_auction = self.auction_by_id(id);
+        for auction_id in 0..=self.last_valid_auction_id().get() {
+            let opt_listed_auction = self.auction_by_id(auction_id);
 
-            if !opt_listed_auction.is_empty(){
+            if !opt_listed_auction.is_empty() {
                 let auction = opt_listed_auction.get();
                 if auction.auctioned_tokens.token_identifier == collection {
                     total_listed += 1;
-                    total_price += &auction.current_bid;
+                    total_price += &auction.min_bid;
 
-                    if min_price == BigUint::zero() || &auction.current_bid < &min_price {
-                        min_price = auction.current_bid;
+                    if min_price == BigUint::zero() || &auction.min_bid < &min_price {
+                        min_price = auction.min_bid;
                     }
                 }
             } else {
-                let opt_bought_auction = self.bought_auction_by_id(id);
+                let opt_bought_auction = self.bought_auction_by_id(auction_id);
 
                 if !opt_bought_auction.is_empty() {
                     let auction = opt_bought_auction.get();

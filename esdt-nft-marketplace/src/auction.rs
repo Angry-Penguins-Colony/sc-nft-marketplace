@@ -224,47 +224,16 @@ pub trait AuctionModule:
     }
 
     #[view(getAuctionsOfCollection)]
-    fn get_auctions_of_collection(&self, collection: TokenIdentifier<Self::Api>) -> MultiValueEncoded<Self::Api, MultiValue2<u64, Auction<Self::Api>>> {
-        return self.get_filtered_auctions_list(
-            &Self::auction_by_id,
-            self.last_valid_auction_id().get(),
-            &|auction| {
-                !auction.is_empty() 
-                    && auction.get().auctioned_tokens.token_identifier == collection
-            },
-        );
-    }
+    fn get_auctions_of_collection(&self, collections: MultiValueEncoded<TokenIdentifier<Self::Api>>) -> MultiValueEncoded<Self::Api, MultiValue2<u64, Auction<Self::Api>>> {
+        
+        let collections_vec = collections.to_vec();
 
-    #[view(getBoughtAuctionsOfToken)]
-    fn get_bought_auctions_of_token(&self, collection: TokenIdentifier<Self::Api>, nonce: u64) -> ManagedVec<Self::Api, BoughtAuction<Self::Api>> {
-        let mut bought_auctions = ManagedVec::new();
-
-        for id in 1..=self.last_valid_auction_id().get() {
-            let auction = self.bought_auction_by_id(id);
-
-            if !auction.is_empty() {
-                let auction = auction.get();
-
-                if auction.auctioned_tokens.token_identifier == collection && auction.auctioned_tokens.token_nonce == nonce {
-                    bought_auctions.push(auction);
-                }
-            }
-        }
-
-        bought_auctions
-    }
-
-    fn get_filtered_auctions_list(&self, 
-        get_auction_from_storage: &dyn Fn(&Self, u64) -> SingleValueMapper<Auction<Self::Api>>,
-        end_id: u64,
-        filter: &dyn Fn(&SingleValueMapper<Auction<Self::Api>>) -> bool,
-    ) -> MultiValueEncoded<Self::Api,  MultiValue2<u64, Auction<Self::Api>>>  {
         let mut auctions_list = MultiValueEncoded::<Self::Api, MultiValue2<u64, Auction<Self::Api>>>::new();
 
-        for n in 1..=end_id {
-            let auction = get_auction_from_storage(&self, n);
+        for n in 1..=self.last_valid_auction_id().get() {
+            let auction = self.auction_by_id(n);
 
-            if filter(&auction) {
+            if !auction.is_empty()   && collections_vec.find(&auction.get().auctioned_tokens.token_identifier).is_some() {
                 auctions_list.push(MultiValue2::from((n, auction.get())));
             }
         }
@@ -272,6 +241,32 @@ pub trait AuctionModule:
         return auctions_list;
     }
 
+    #[view(getBoughtAuctionsOfToken)]
+    fn get_bought_auctions_of_token(&self, collections: MultiValueEncoded<MultiValue2<TokenIdentifier<Self::Api>, u64>>) -> ManagedVec<Self::Api, BoughtAuction<Self::Api>> {        
+    
+        macro_rules! has_collection {
+            ($collection:expr, $token_id:expr, $nonce:expr) => {
+                $collection.any(|c| &c.0.0 == $token_id && &c.0.1 == $nonce)
+            };
+        }
+        
+
+        let mut bought_auctions = ManagedVec::new();        
+
+        for id in 1..=self.last_valid_auction_id().get() {
+            let auction = self.bought_auction_by_id(id);
+
+            if !auction.is_empty() {
+                let auction = auction.get();
+
+                if has_collection!(collections.clone().into_iter(), &auction.auctioned_tokens.token_identifier, &auction.auctioned_tokens.token_nonce) {
+                    bought_auctions.push(auction);
+                }
+            }
+        }
+
+        bought_auctions
+    }
 
     #[storage_mapper("auctionById")]
     fn auction_by_id(&self, auction_id: u64) -> SingleValueMapper<Auction<Self::Api>>;

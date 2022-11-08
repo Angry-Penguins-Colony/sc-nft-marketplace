@@ -55,15 +55,23 @@ pub trait AuctionModule:
     fn auction_token(
         &self,
         min_bid: BigUint,
-        max_bid: BigUint,
-        deadline: u64,
-        accepted_payment_token: EgldOrEsdtTokenIdentifier,
-        opt_min_bid_diff: OptionalValue<BigUint>,
-        opt_sft_max_one_per_payment: OptionalValue<bool>,
-        opt_accepted_payment_token_nonce: OptionalValue<u64>,
-        opt_start_time: OptionalValue<u64>,
+        // max_bid: BigUint,
+        // deadline: u64,
+        // accepted_payment_token: EgldOrEsdtTokenIdentifier,
+        // opt_min_bid_diff: OptionalValue<BigUint>,
+        // opt_sft_max_one_per_payment: OptionalValue<bool>,
+        // opt_accepted_payment_token_nonce: OptionalValue<u64>,
+        // opt_start_time: OptionalValue<u64>,
     ) -> u64 {
         self.require_not_paused();
+
+        let max_bid = min_bid.clone();
+        let deadline = 9_999_999_999;
+        let accepted_payment_token = EgldOrEsdtTokenIdentifier::egld();
+        let opt_min_bid_diff = OptionalValue::None;
+        let opt_sft_max_one_per_payment = OptionalValue::None;
+        let opt_accepted_payment_token_nonce = OptionalValue::None;
+        let opt_start_time = OptionalValue::None;
 
         let (nft_type, nft_nonce, nft_amount) = self.call_value().single_esdt().into_tuple();
 

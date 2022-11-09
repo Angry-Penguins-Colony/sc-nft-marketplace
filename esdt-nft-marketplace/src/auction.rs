@@ -69,7 +69,7 @@ pub trait AuctionModule:
         let deadline = 9_999_999_999;
         let accepted_payment_token = EgldOrEsdtTokenIdentifier::egld();
         let opt_min_bid_diff = OptionalValue::None;
-        let opt_sft_max_one_per_payment = OptionalValue::None;
+        let opt_sft_max_one_per_payment = OptionalValue::Some(true);
         let opt_accepted_payment_token_nonce = OptionalValue::None;
         let opt_start_time = OptionalValue::None;
 

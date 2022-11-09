@@ -9,8 +9,6 @@ elrond_wasm_node::wasm_endpoints! {
     (
         auctionToken
         buySft
-        claimTokens
-        endAuction
         getAuctionsOfCollection
         getBoughtAuctionsOfToken
         getClaimableAmount

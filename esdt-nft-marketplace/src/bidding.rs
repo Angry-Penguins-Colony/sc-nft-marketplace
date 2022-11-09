@@ -17,8 +17,9 @@ pub trait BiddingModule:
         auction_id: u64,
         nft_type: TokenIdentifier,
         nft_nonce: u64,
-        opt_sft_buy_amount: OptionalValue<BigUint>,
+        // opt_sft_buy_amount: OptionalValue<BigUint>,
     ) {
+        let opt_sft_buy_amount = OptionalValue::None;
         self.require_not_paused();
 
         let (payment_token, payment_token_nonce, payment_amount) =

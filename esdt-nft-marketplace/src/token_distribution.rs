@@ -12,50 +12,6 @@ pub struct BidSplitAmounts<M: ManagedTypeApi> {
 pub trait TokenDistributionModule:
     crate::common_util_functions::CommonUtilFunctions + elrond_wasm_modules::pause::PauseModule
 {
-    #[endpoint(claimTokens)]
-    fn claim_tokens(
-        &self,
-        claim_destination: ManagedAddress,
-        token_nonce_pairs: MultiValueEncoded<MultiValue2<EgldOrEsdtTokenIdentifier, u64>>,
-    ) -> MultiValue2<BigUint, ManagedVec<EsdtTokenPayment<Self::Api>>> {
-        self.require_not_paused();
-
-        let caller = self.blockchain().get_caller();
-        let mut egld_payment_amount = BigUint::zero();
-        let mut output_payments = ManagedVec::new();
-
-        for pair in token_nonce_pairs {
-            let (token_id, token_nonce) = pair.into_tuple();
-            let amount_mapper = self.claimable_amount(&caller, &token_id, token_nonce);
-            let amount = amount_mapper.get();
-
-            if amount > 0 {
-                amount_mapper.clear();
-
-                if token_id.is_egld() {
-                    egld_payment_amount = amount;
-                } else {
-                    output_payments.push(EsdtTokenPayment::new(
-                        token_id.unwrap_esdt(),
-                        token_nonce,
-                        amount,
-                    ));
-                }
-            }
-        }
-
-        if egld_payment_amount > 0 {
-            self.send()
-                .direct_egld(&claim_destination, &egld_payment_amount);
-        }
-        if !output_payments.is_empty() {
-            self.send()
-                .direct_multi(&claim_destination, &output_payments);
-        }
-
-        (egld_payment_amount, output_payments).into()
-    }
-
     fn calculate_cut_amount(&self, total_amount: &BigUint, cut_percentage: &BigUint) -> BigUint {
         total_amount * cut_percentage / PERCENTAGE_TOTAL
     }

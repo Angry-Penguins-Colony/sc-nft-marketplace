@@ -164,35 +164,6 @@ pub trait AuctionModule:
         auction_id
     }
 
-    #[endpoint(endAuction)]
-    fn end_auction(&self, auction_id: u64) {
-        self.require_not_paused();
-
-        let auction = self.try_get_auction(auction_id);
-        let current_time = self.blockchain().get_block_timestamp();
-
-        let deadline_reached = current_time > auction.deadline;
-        let max_bid_reached = if let Some(max_bid) = &auction.max_bid {
-            &auction.current_bid == max_bid
-        } else {
-            false
-        };
-
-        require!(
-            deadline_reached || max_bid_reached,
-            "Auction deadline has not passed nor is the current bid equal to max bid"
-        );
-        require!(
-            auction.auction_type != AuctionType::SftOnePerPayment,
-            "Cannot end this type of auction"
-        );
-
-        self.distribute_tokens_after_auction_end(&auction, None);
-        self.auction_by_id(auction_id).clear();
-
-        self.emit_end_auction_event(auction_id, auction);
-    }
-
     #[endpoint]
     fn withdraw(&self, auction_id: u64) {
         self.require_not_paused();
